@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "de.lmichaelis.sirius.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "ChatHudMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "ChatHudMixin",
+    "ChatScreenMixin",
+    "CommandSuggestorMixin"
+  ]
+}

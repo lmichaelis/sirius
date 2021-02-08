@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "sirius",
+  "version": "${version}",
+  "name": "Sirius",
+  "description": "An augmented chat experience",
+  "authors": [
+    "Luis Michaelis"
+  ],
+  "contact": {
+    "repo": "https://github.com/lmichaelis/sirius"
+  },
+  "license": "MIT",
+  "icon": "assets/sirius/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "de.lmichaelis.sirius.Sirius"
+    ]
+  },
+  "mixins": [
+    "sirius.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.10",
+    "fabric": "*",
+    "minecraft": ">=1.16.3"
+  }
+}
