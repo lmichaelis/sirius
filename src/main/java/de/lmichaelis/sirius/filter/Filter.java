@@ -14,9 +14,9 @@ public abstract class Filter {
 
     public void compile() throws PatternSyntaxException {
         int flags = 0;
-        if(isCaseInsensitive){
+        if (isCaseInsensitive) {
             flags |= Pattern.CASE_INSENSITIVE;
-            flags |= Pattern.UNICODE_CASE;
+            flags |= Pattern.UNICODE_CASE; // Pattern docs: Specifying this flag may impose a performance penalty.
         }
         if (isLiteral) {
             flags |= Pattern.LITERAL;
@@ -24,11 +24,13 @@ public abstract class Filter {
         pattern = Pattern.compile(expression, flags);
     }
 
-//    public Matcher match(Text input){
-//        return pattern.matcher(input);
-//    }
-//
-    public boolean isMatch(Text input){
+/*
+    public Matcher match(Text input){
+        return pattern.matcher(input);
+    }
+*/
+
+    public boolean isMatch(Text input) {
 //        return match(input).matches();
         return false;
     }

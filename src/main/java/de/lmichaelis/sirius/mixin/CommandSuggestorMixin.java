@@ -38,18 +38,18 @@ public class CommandSuggestorMixin {
 
     /**
      * @param matrixStack
-     * @param i
-     * @param j
+     * @param mouseX
+     * @param mouseY
      * @author
      */
     @Overwrite
-    public void render(MatrixStack matrixStack, int i, int j) {
-        if (this.window != null) {
-            this.window.render(matrixStack, i, j);
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY) {
+        if (window != null) {
+            window.render(matrixStack, mouseX, mouseY);
         } else {
             int k = 0;
 
-            for (Iterator<OrderedText> var5 = this.messages.iterator(); var5.hasNext(); ++k) {
+            for (Iterator<OrderedText> var5 = messages.iterator(); var5.hasNext(); ++k) {
                 OrderedText orderedText = var5.next();
 
                 int y = Sirius.window.getHeight() + Sirius.window.getY() - 27 - 12 * k;
@@ -62,8 +62,8 @@ public class CommandSuggestorMixin {
                     x2 -= diff;
                 }
 
-                DrawableHelper.fill(matrixStack, x, y, x2, y + 12, this.color);
-                this.textRenderer.drawWithShadow(matrixStack, orderedText, x, y + 2, -1);
+                DrawableHelper.fill(matrixStack, x, y, x2, y + 12, color);
+                textRenderer.drawWithShadow(matrixStack, orderedText, x, y + 2, -1);
             }
         }
 

@@ -32,8 +32,9 @@ public class ChatWindow extends DrawableHelper {
     private int width;
     private int height;
     private double opacity;
-    private int backgroundColor = 0x00111111; // ARGB color, but alpha must be 0 for
-    private int scrollOffset = 0;
+    float scale;// = 1.0F;
+    private int backgroundColor; // ARGB color, but alpha must be 0 to add opacity later
+    private int scrollOffset = 0; // number of messages to scroll up by
 
     public ChatWindow(final Config config) {
         x = config.chatWindowX;
@@ -42,14 +43,18 @@ public class ChatWindow extends DrawableHelper {
         width = config.chatWindowWidth;
         height = config.chatWindowHeight;
         opacity = config.chatWindowOpacity;
+        backgroundColor = config.chatWindowFocusedBackColor;
+//        scale = config.chatScale; //TODO: grab from config rather than updating in beginRender() (using Minecraft's config setting)
 
-        this.config = config;
+        this.config = config; // FIXME: What does this do?
     }
 
     public void addMessage(Text text) {
         List<OrderedText> brokenMessages = ChatMessages.breakRenderedChatMessageLines(text, width - 8, client.textRenderer);
 
         if (scrollOffset != 0) {
+            // if scroll position is not at the bottom of the chat,
+            // then update scrollOffset so messages appear to not move
             scrollOffset += brokenMessages.size();
         }
 
@@ -74,15 +79,17 @@ public class ChatWindow extends DrawableHelper {
 
     protected void fixAlignment() {
         x = Math.max(0, x);
-        x = Math.min(x, (int) (client.getWindow().getScaledWidth() - this.width * client.options.chatScale));
+        x = Math.min(x, (int) (client.getWindow().getScaledWidth() - width * scale));
 
         y = Math.max(0, y);
-        y = Math.min(y, (int) (client.getWindow().getScaledHeight() - this.height * client.options.chatScale));
+        y = Math.min(y, (int) (client.getWindow().getScaledHeight() - height * scale));
     }
 
     protected void beginRender(MatrixStack matrices) {
+        scale = (float) client.options.chatScale; //FIXME: maybe this should be updated somewhere else
+
         matrices.translate(x, y, 0.0D);
-        matrices.scale((float) client.options.chatScale, (float) client.options.chatScale, 1.0f);
+        matrices.scale(scale, scale, 1.0f);
         matrices.translate(-x, -y, 0.0D);
     }
 
@@ -91,8 +98,7 @@ public class ChatWindow extends DrawableHelper {
         matrices.translate(0.0D, -(double) (this.client.getWindow().getScaledHeight() - 48), 0.0D); //TODO before or after beginRender()?
         beginRender(matrices);
 
-        float scale = (float) client.options.chatScale;
-        int actualOpacity = Math.min((int) (opacity * 255.0D), 255) << 24;
+        int actualOpacity = Math.min((int) (opacity * 255.0D), 255) << 24; // FIXME config validation should be handled by Config
 
         fill(matrices, x, y, (x + width), (y + height), (backgroundColor | actualOpacity));
 
@@ -114,7 +120,7 @@ public class ChatWindow extends DrawableHelper {
     }
 
     public void clear(boolean clearHistory) {
-        //TODO if clearHistory then acutally clear the history
+        //TODO if clearHistory then actually clear the history
         messages.clear();
     }
 
@@ -126,7 +132,7 @@ public class ChatWindow extends DrawableHelper {
     public class ChatScreen extends Screen {
         protected TextFieldWidget chatField;
         private CommandSuggestor commandSuggestor;
-        private int sx = 2, sy = 2;
+//        private int scaledMouseX = 2, scaledMouseY = 2; // For debugging
 
         protected ChatScreen() {
             super(NarratorManager.EMPTY);
@@ -177,6 +183,7 @@ public class ChatWindow extends DrawableHelper {
             this.commandSuggestor.refresh();
         }
 
+        @Override
         public void resize(MinecraftClient client, int width, int height) {
             String string = this.chatField.getText();
             this.init(client, width, height);
@@ -184,6 +191,7 @@ public class ChatWindow extends DrawableHelper {
             this.commandSuggestor.refresh();
         }
 
+        @Override
         public void removed() {
             this.client.keyboard.setRepeatEvents(false);
             scrollOffset = 0;
@@ -197,6 +205,7 @@ public class ChatWindow extends DrawableHelper {
             return false;
         }
 
+        @Override
         public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
             if (this.commandSuggestor.keyPressed(keyCode, scanCode, modifiers)) {
                 return true;
@@ -218,14 +227,15 @@ public class ChatWindow extends DrawableHelper {
             }
         }
 
+        @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            sx = (int)mouseX - x;
-            sx /= client.options.chatScale;
-            sx += x;
+            int scaledMouseX = (int) mouseX - x;
+            scaledMouseX /= scale;
+            scaledMouseX += x;
 
-            sy = (int)mouseY - y;
-            sy /= client.options.chatScale;
-            sy += y;
+            int scaledMouseY = (int) mouseY - y;
+            scaledMouseY /= scale;
+            scaledMouseY += y;
 
             if (this.commandSuggestor.mouseClicked((int) mouseX, (int) mouseY, button)) {
                 return true;
@@ -242,10 +252,11 @@ public class ChatWindow extends DrawableHelper {
 //                    }
                 }
 
-                return this.chatField.mouseClicked(sx, sy, button) || super.mouseClicked(mouseX, mouseY, button);
+                return this.chatField.mouseClicked(scaledMouseX, scaledMouseY, button) || super.mouseClicked(mouseX, mouseY, button);
             }
         }
 
+        @Override
         protected void insertText(String text, boolean override) {
             if (override) {
                 this.chatField.setText(text);
@@ -254,6 +265,7 @@ public class ChatWindow extends DrawableHelper {
             }
         }
 
+        @Override
         public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
             matrices.push();
             beginRender(matrices);
@@ -270,23 +282,26 @@ public class ChatWindow extends DrawableHelper {
             matrices.pop();
         }
 
+        @Override
         public boolean isPauseScreen() {
             return false;
         }
 
         @Override
         public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+            //TODO try manually keeping track of start click position and update our own delta from it
+            // maybe "drag-drift" and other dragging-related bugs are caused by deltaX and deltaY being inaccurate;
             x += deltaX;
             y += deltaY;
 
             fixAlignment();
-            String string = this.chatField.getText();
+            String string = this.chatField.getText(); //FIXME: what does this do? is it necessary?
             this.init(client, width, height);
 
             this.chatField.x = ChatWindow.this.x + 4;
             this.chatField.y = ChatWindow.this.y + ChatWindow.this.height - 12;
 
-            this.chatField.setText(string);
+            this.chatField.setText(string); //FIXME: what does this do? is it necessary?
             this.commandSuggestor.refresh();
             return true;
         }

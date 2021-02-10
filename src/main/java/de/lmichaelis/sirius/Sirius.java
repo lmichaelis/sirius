@@ -19,10 +19,13 @@ public class Sirius implements ClientModInitializer {
         Config cfg = new Config();
         cfg.chatWindowX = 10;
         cfg.chatWindowY = 100;
-//        cfg.chatWindowUnfocusedHeight = 200;
-        cfg.chatWindowHeight = 200;
-        cfg.chatWindowWidth = 300;
-        cfg.chatWindowOpacity = 0.8;
+//        cfg.chatWindowUnfocusedHeight = 200; //FIXME: read or disable minecraft chat's "unfocused height" setting
+        cfg.chatWindowHeight = 200;  //FIXME: read or disable minecraft chat's "focused height" setting
+        cfg.chatWindowWidth = 300; //FIXME: read or disable minecraft chat's "width" setting
+//        cfg.chatScale = 1.0F; //FIXME: read or disable minecraft chat's "scale" setting
+        cfg.chatWindowOpacity = 0.8; //FIXME: read or disable minecraft chat's "text background opacity" setting
+        cfg.chatWindowFocusedBackColor = 0x00111111;
+        cfg.lineSpacing = 0; //FIXME: read or disable minecraft chat's "line spacing" setting
 
         window = new ChatWindow(cfg);
     }
